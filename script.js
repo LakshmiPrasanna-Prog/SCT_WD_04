@@ -1,87 +1,88 @@
-// Retrieve todo from local storage or initialize an empty array
-let todo = JSON.parse(localStorage.getItem("todo")) || [];
-const todoInput = document.getElementById("todoInput");
-const todoList = document.getElementById("todoList");
-const todoCount = document.getElementById("todoCount");
-const addButton = document.querySelector(".btn");
-const deleteButton = document.getElementById("deleteButton");
-
-// Initialize
-document.addEventListener("DOMContentLoaded", function () {
-  addButton.addEventListener("click", addTask);
-  todoInput.addEventListener("keydown", function (event) {
-    if (event.key === "Enter") {
-      event.preventDefault(); // Prevents default Enter key behavior
-      addTask();
-    }
-  });
-  deleteButton.addEventListener("click", deleteAllTasks);
-  displayTasks();
-});
-
 function addTask() {
-  const newTask = todoInput.value.trim();
-  if (newTask !== "") {
-    todo.push({ text: newTask, disabled: false });
-    saveToLocalStorage();
-    todoInput.value = "";
-    displayTasks();
-  }
-}
 
-function displayTasks() {
-  todoList.innerHTML = "";
-  todo.forEach((item, index) => {
-    const p = document.createElement("p");
-    p.innerHTML = `
-      <div class="todo-container">
-        <input type="checkbox" class="todo-checkbox" id="input-${index}" ${
-      item.disabled ? "checked" : ""
-    }>
-        <p id="todo-${index}" class="${
-      item.disabled ? "disabled" : ""
-    }" onclick="editTask(${index})">${item.text}</p>
-      </div>
-    `;
-    p.querySelector(".todo-checkbox").addEventListener("change", () =>
-      toggleTask(index)
-    );
-    todoList.appendChild(p);
-  });
-  todoCount.textContent = todo.length;
-}
+    const taskInput = document.getElementById("taskInput");
+    const taskList = document.getElementById("taskList");
 
-function editTask(index) {
-  const todoItem = document.getElementById(`todo-${index}`);
-  const existingText = todo[index].text;
-  const inputElement = document.createElement("input");
+    if (taskInput.value.trim() !== "") {
 
-  inputElement.value = existingText;
-  todoItem.replaceWith(inputElement);
-  inputElement.focus();
+        const li = document.createElement("li");
 
-  inputElement.addEventListener("blur", function () {
-    const updatedText = inputElement.value.trim();
-    if (updatedText) {
-      todo[index].text = updatedText;
-      saveToLocalStorage();
+        const dateTime = new Date();
+        const formattedDateTime = dateTime.toLocaleString();
+
+        li.innerHTML = `
+        <span class = "task-text">${taskInput.value}</span>
+        <button class = "edit-btn"  onClick = "editTask(this)">Edit Task</button>
+        <span class = "task-date">[${formattedDateTime}]</span>
+        <button class = "delete-btn"  onClick = "deleteTask(this)">Delete Task</button>
+        `;
+
+        taskList.appendChild(li);
+        saveTasksToLocaleStorage();
+        taskInput.value = "";
     }
-    displayTasks();
-  });
 }
 
-function toggleTask(index) {
-  todo[index].disabled = !todo[index].disabled;
-  saveToLocalStorage();
-  displayTasks();
+function deleteTask(btn) {
+
+    const taskList = document.getElementById("taskList");
+    const li = btn.parentNode;
+
+    taskList.removeChild(li);
+
+    saveTasksToLocaleStorage();
 }
 
-function deleteAllTasks() {
-  todo = [];
-  saveToLocalStorage();
-  displayTasks();
+function editTask(btn) {
+    const li = btn.parentNode;
+    const taskTextElement = li.querySelector(".task-text");
+
+    const updatedTaskText = prompt("Edit Task:", taskTextElement.innerText);
+
+    if (updatedTaskText !== null && updatedTaskText.trim() !== "") {
+        taskTextElement.innerText = updatedTaskText;
+        saveTasksToLocaleStorage();
+    }
 }
 
-function saveToLocalStorage() {
-  localStorage.setItem("todo", JSON.stringify(todo));
+function saveTasksToLocaleStorage() {
+
+    const taskList = document.getElementById("taskList");
+
+    const tasks = [];
+
+    for (let i = 0; i< taskList.children.length; i++) {
+
+        const taskText = taskList.children[i].querySelector(".task-text").innerText;
+        const taskDate = taskList.children[i].querySelector(".task-date").innerText;
+
+        const task = { text: taskText, date: taskDate };
+
+        tasks.push(task);
+
+    }
+
+    localStorage.setItem("tasks", JSON.stringify(tasks));
 }
+
+function loadTasksFromLocalStorage() {
+
+    const taskList = document.getElementById("taskList");
+
+    const tasks = JSON.parse(localStorage.getItem("tasks")) || [] ;
+
+    tasks.forEach(task => {
+        const li = document.createElement("li");
+
+        li.innerHTML = `
+        <span class = "task-text">${task.text}</span>
+        <button class = "edit-btn"  onClick = "editTask(this)">Edit Task</button>
+        <span class = "task-date">[${task.date}]</span>
+        <button class = "delete-btn"  onClick = "deleteTask(this)">Delete Task</button>
+        `;
+
+        taskList.appendChild(li);
+    });
+}
+
+document.addEventListener("DOMContentLoaded", loadTasksFromLocalStorage);
